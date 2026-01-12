@@ -43,6 +43,11 @@ def init_db():
     columns = [row[1] for row in cursor.fetchall()]
     if 'user_id' not in columns:
         db.execute("ALTER TABLE accounts ADD COLUMN user_id INTEGER")
+    
+    # Migration: Check if status column exists
+    if 'status' not in columns:
+        db.execute("ALTER TABLE accounts ADD COLUMN status TEXT DEFAULT 'unknown'")
+
 
 
     # 审计日志表

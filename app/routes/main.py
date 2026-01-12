@@ -96,6 +96,12 @@ def view_mail(acc_id):
     
     if account:
         result = fetch_latest_mail(account['email'], account['auth_code'])
+        
+        # Update account status based on result
+        new_status = 'success' if result['status'] == 'success' else 'error'
+        db.execute("UPDATE accounts SET status = ? WHERE id = ?", (new_status, acc_id))
+        db.commit()
+        
         return jsonify(result)
     return jsonify({"status": "error", "message": "Account not found"})
 
