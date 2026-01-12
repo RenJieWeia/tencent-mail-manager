@@ -1,86 +1,143 @@
-# MailNest
+# Tencent Mail Manager (MailNest)
 
-这是一个基于 Python Flask 开发的轻量级 Web 应用，旨在帮助用户集中管理多个 QQ 邮箱账号。支持账号的批量导入、实时查看最新邮件、以及 Docker 容器化部署。
+A Flask-based application for managing multiple QQ Mail accounts effectively.
 
-## ✨ 主要功能
+## Features
 
-*   **集中管理**：在左侧列表统一查看所有保存的邮箱账号。
-*   **邮件预览**：点击账号即可通过 IMAP 协议直连腾讯服务器，实时获取并渲染最新一封邮件（支持 HTML 内容和图片显示）。
-*   **批量导入**：支持通过 Excel 模版批量导入多个账号（自动下载模版）。
-*   **快捷搜索**：内置实时搜索栏，快速定位目标邮箱。
-*   **账号管理**：支持单条账号的添加（通过导入）和删除操作。
-*   **美观界面**：采用 Bootstrap 5 和 Inter 字体打造的现代化清爽 UI。
-*   **日志系统**：详细的后台操作日志 (`app.log`)，方便维护排查。
+- **Multi-Account Management**: Add, delete, and view emails from multiple QQ accounts.
+- **Audit Logging**: Tracks critical actions (Login, Delete, Add).
+- **Default Ownership Control**: Configure whether new accounts belong to the creator or the admin automatically.
+- **Admin Roles**: 
+    - `renjie`: Super Admin with full system access.
+    - `admin`: Standard Admin (dashboard access configurable by Super Admin).
+- **Data Isolation Mode**: 
+    - Toggleable feature for strict data scoping.
+    - When enabled, users only see accounts assigned to them.
+    - Admins can assign accounts to users in bulk.
+- **Scale Ready**: Optimized for managing up to 10k emails.
 
-## 🛠️ 技术栈
-
-*   **后端**：Python 3.9+, Flask, SQLite
-*   **前端**：HTML5, Bootstrap 5, JavaScript
-*   **邮件协议**：IMAP (SSL)
-*   **数据处理**：Pandas, OpenPyXL
-*   **部署**：Docker, GitHub Actions
-
-## 🚀 快速开始
-
-### 方式一：本地直接运行
-
-1.  **克隆项目**
-    ```bash
-    git clone <your-repo-url>
-    cd tencent-mail-manager
-    ```
-
-2.  **安装依赖**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3.  **运行应用**
-    ```bash
-    python app.py
-    ```
-
-4.  **访问**
-    打开浏览器访问 [http://127.0.0.1:5000](http://127.0.0.1:5000)
-
-### 方式二：Docker 部署
-
-1.  **构建镜像**
-    ```bash
-    docker build -t tencent-mail-manager .
-    ```
-
-2.  **运行容器**
-    ```bash
-    # 运行并挂载数据目录，确保数据持久化
-    docker run -d -p 5000:5000 -v $(pwd)/data:/app/data --name mail-manager tencent-mail-manager
-    ```
-
-3.  **访问**
-    浏览器访问 [http://localhost:5000](http://localhost:5000)
-
-## 📁 项目结构
+## Project Structure
 
 ```
-tencent-mail-manager/
-├── app.py              # Flask 后端核心逻辑
-├── accounts.db         # SQLite 数据库 (自动生成)
-├── app.log             # 运行日志 (自动生成)
-├── requirements.txt    # Python 依赖列表
-├── Dockerfile          # Docker 构建文件
-└── templates/
-    └── index.html      # 前端界面模板
+├── app/
+│   ├── routes/         # Blueprints for Main and Admin routes
+│   ├── services/       # Business logic (Email fetching)
+│   ├── templates/      # HTML Templates
+│   ├── __init__.py     # App Factory
+│   ├── auth.py         # Authentication logic
+│   ├── db.py           # Database connection and schema
+│   └── audit.py        # Audit logging helper
+├── data/               # SQLite Database storage
+├── run.py              # Application Entry Point
+├── Dockerfile          # Container configuration
+└── requirements.txt    # Python dependencies
 ```
 
-## 📝 注意事项
+## Setup & Run
 
-1.  **授权码**：添加账号时输入的密码必须是 **QQ 邮箱开启 IMAP/SMTP 服务后生成的授权码**，而不是你的 QQ 登录密码。
-2.  **网络连接**：由于需要连接 `imap.qq.com`，请确保运行环境能够访问外网。
+1. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## 🤝 贡献
+2. **Run the Application**:
+   ```bash
+   python run.py
+   ```
+   The app will start at `http://0.0.0.0:5000`.
 
-欢迎提交 Issue 或 Pull Request 来改进这个项目！
+3. **Login Credentials**:
+   - Admin: `admin` / `admin`
+   - Super Admin: `renjie` / `Weirenjie200029@`
 
-## 📄 许可证
+## Data Isolation Mode
 
-MIT License
+1. Login as `admin` or `renjie`.
+2. Navigate to **Admin Dashboard**.
+3. Toggle "Isolation Mode" ON.
+4. Use the API or Dashboard to assign accounts to specific users.
+   - **Bulk Assignment API**: POST `/admin/bulk_assign`
+     ```json
+     {
+       "account_ids": [1, 2, 3],
+       "user_id": 5
+     }
+     ```
+
+## Development
+
+- **Database**: SQLite (`data/accounts.db`).
+- **Templates**: Uses Jinja2 and Bootstrap 5.
+
+---
+
+# 腾讯邮箱管理器 (MailNest) - 中文说明
+
+这是一个基于 Flask 的应用程序，用于高效管理多个 QQ 邮箱账号。
+
+## 功能特性
+
+- **多账号管理**: 添加、删除和查看来自多个 QQ 账号的邮件。
+- **审计日志**: 追踪关键操作（登录、删除、添加）。
+- **默认归属权控制**: 配置新添加的账号是归属于添加人还是自动归属于管理员。
+- **管理员角色**: 
+    - `renjie`: 超级管理员，拥有完整系统权限。
+    - `admin`: 普通管理员 (后台访问权限可由超管配置)。
+- **数据隔离模式**: 
+    - 可切换的严格数据权限功能。
+    - 启用后，普通用户只能看到分配给他们的账号。
+    - 管理员可以批量分配账号给用户。
+- **扩展性**: 针对管理多达 1万+ 邮箱进行了优化。
+
+## 项目结构
+
+```
+├── app/
+│   ├── routes/         # 主路由和管理员路由蓝图
+│   ├── services/       # 业务逻辑 (邮件获取)
+│   ├── templates/      # HTML 模版
+│   ├── __init__.py     # 应用工厂函数
+│   ├── auth.py         # 认证逻辑
+│   ├── db.py           # 数据库连接和表结构
+│   └── audit.py        # 审计日志助手
+├── data/               # SQLite 数据库文件
+├── run.py              # 程序入口
+├── Dockerfile          # Docker 容器配置
+└── requirements.txt    # Python 依赖项
+```
+
+## 安装与运行
+
+1. **安装依赖**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **运行应用**:
+   ```bash
+   python run.py
+   ```
+   应用将在 `http://0.0.0.0:5000` 启动。
+
+3. **默认登录凭据**:
+   - 管理员: `admin` / `admin`
+   - 超级管理员: `renjie` / `Weirenjie200029@`
+
+## 数据隔离模式
+
+1. 使用 `admin` 或 `renjie` 登录。
+2. 进入 **管理后台 (Admin Dashboard)**。
+3. 开启 "数据隔离模式 (Isolation Mode)"。
+4. 使用 API 或后台将账号分配给特定用户。
+   - **批量分配 API**: POST `/admin/bulk_assign`
+     ```json
+     {
+       "account_ids": [1, 2, 3],
+       "user_id": 5
+     }
+     ```
+
+## 开发
+
+- **数据库**: SQLite (`data/accounts.db`).
+- **模版引擎**: 使用 Jinja2 和 Bootstrap 5.

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}管理后台{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-body">系统管理后台</h2>
+            <p class="text-body-secondary">欢迎回来, {{ session.get('username') }}</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Visualization / Stats Cards -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm bg-body">
+                <div class="card-body">
+                    <h5 class="card-title text-body-secondary text-uppercase small fw-bold mb-3">用户总数</h5>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-people fs-1 text-primary me-3"></i>
+                        <span class="fs-2 fw-bold text-body">{{ users|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm bg-body">
+                <div class="card-body">
+                    <h5 class="card-title text-body-secondary text-uppercase small fw-bold mb-3">数据隔离模式</h5>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="bi bi-shield-lock fs-1 {{ 'text-success' if isolation_mode else 'text-secondary' }} me-3"></i>
+                            <span class="fs-4 fw-bold text-body">{{ '已开启' if isolation_mode else '已关闭' }}</span>
+                        </div>
+                        <form action="{{ url_for('admin.toggle_isolation') }}" method="POST">
+                            <input type="hidden" name="mode" value="{{ 'off' if isolation_mode else 'on' }}">
+                            <button type="submit" class="btn {{ 'btn-outline-danger' if isolation_mode else 'btn-outline-success' }}">
+                                {{ '关闭隔离' if isolation_mode else '开启隔离' }}
+                            </button>
+                        </form>
+                    </div>
+                    <p class="small text-body-secondary mt-2 mb-0">
+                        {% if isolation_mode %}
+                        用户只能看到分配给他们的账号。
+                        {% else %}
+                        所有用户共享公共邮箱池。
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {% if g.is_super_admin %}
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm bg-body">
+                <div class="card-body">
+                    <h5 class="card-title text-body-secondary text-uppercase small fw-bold mb-3">Admin 权限管理</h5>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="bi bi-person-lock fs-1 {{ 'text-success' if allow_admin_dashboard else 'text-danger' }} me-3"></i>
+                            <span class="fs-4 fw-bold text-body">{{ '已授权' if allow_admin_dashboard else '未授权' }}</span>
+                        </div>
+                        <form action="{{ url_for('admin.toggle_admin_access') }}" method="POST">
+                            <input type="hidden" name="mode" value="{{ 'off' if allow_admin_dashboard else 'on' }}">
+                            <button type="submit" class="btn {{ 'btn-outline-danger' if allow_admin_dashboard else 'btn-outline-primary' }}">
+                                {{ '取消授权' if allow_admin_dashboard else '授权访问' }}
+                            </button>
+                        </form>
+                    </div>
+                    <p class="small text-body-secondary mt-2 mb-0">
+                        是否允许 Admin 账号访问此控制台。
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm bg-body">
+                <div class="card-body">
+                    <h5 class="card-title text-body-secondary text-uppercase small fw-bold mb-3">默认归属权</h5>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="bi bi-person-badge fs-1 {{ 'text-primary' if default_ownership_self else 'text-warning' }} me-3"></i>
+                            <span class="fw-bold text-body">{{ '归属添加人' if default_ownership_self else '归属Admin' }}</span>
+                        </div>
+                        <form action="{{ url_for('admin.toggle_ownership_mode') }}" method="POST">
+                            <input type="hidden" name="mode" value="{{ 'off' if default_ownership_self else 'on' }}">
+                            <button type="submit" class="btn {{ 'btn-outline-warning' if default_ownership_self else 'btn-outline-primary' }}">
+                                {{ '设为Admin' if default_ownership_self else '设为添加人' }}
+                            </button>
+                        </form>
+                    </div>
+                    <p class="small text-body-secondary mt-2 mb-0">
+                        新添加账号的所有权归属设置。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm bg-body">
+                <div class="card-body">
+                    <h5 class="card-title text-body-secondary text-uppercase small fw-bold mb-3">快捷操作</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.assign_accounts') }}" class="btn btn-outline-primary text-start">
+                            <i class="bi bi-person-fill-gear me-2"></i>分配账号
+                        </a>
+                        <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-secondary text-start">
+                            <i class="bi bi-journal-text me-2"></i>查看日志
+                        </a>
+                        <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-secondary text-start">
+                            <i class="bi bi-people me-2"></i>用户管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

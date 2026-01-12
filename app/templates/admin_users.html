@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}用户管理 - MailNest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">用户管理</h4>
+            <p class="text-body-secondary small mb-0">管理系统内的所有注册用户</p>
+        </div>
+        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm text-white">
+            <i class="bi bi-person-plus-fill"></i>
+            <span>添加新用户</span>
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 overflow-hidden bg-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-body-tertiary border-bottom">
+                    <tr>
+                        <th class="ps-4 py-3 text-body-secondary small text-uppercase bg-body-tertiary">用户 ID</th>
+                        <th class="py-3 text-body-secondary small text-uppercase bg-body-tertiary">用户信息</th>
+                        <th class="py-3 text-body-secondary small text-uppercase bg-body-tertiary">已绑定邮箱</th>
+                        <th class="text-end pe-4 py-3 text-body-secondary small text-uppercase bg-body-tertiary">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td class="ps-4 text-body-secondary fw-mono">#{{ u['id'] }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" 
+                                     style="width: 40px; height: 40px;">
+                                    {{ u['username'][0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-body">{{ u['username'] }}</div>
+                                    {% if u['username'] == 'admin' %}
+                                    <span class="badge bg-primary rounded-pill small" style="font-size: 0.65rem;">管理员</span>
+                                    {% elif u['username'] == 'renjie' %}
+                                    <span class="badge bg-primary rounded-pill small" style="font-size: 0.65rem;">Super Admin</span>
+                                    {% else %}
+                                    <span class="badge bg-body-secondary text-body-secondary border rounded-pill small" style="font-size: 0.65rem;">普通用户</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-inline-flex align-items-center px-3 py-1 rounded-pill bg-body-tertiary border text-body-secondary small">
+                                <i class="bi bi-envelope-fill me-2 opacity-50"></i>
+                                <span class="fw-medium">{{ u['account_count'] }}</span>
+                            </div>
+                        </td>
+                        <td class="text-end pe-4">
+                            {% if u['username'] not in ['admin', 'renjie'] %}
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light bg-body-tertiary border text-body" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteUser({{ u['id'] }}, '{{ u['username'] }}')">
+                                        <i class="bi bi-trash me-2"></i>删除用户
+                                    </a></li>
+                                </ul>
+                            </div>
+                            {% else %}
+                            <span class="text-body-secondary small fst-italic">不可操作</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function deleteUser(id, username) {
+    if(!confirm(`确认要删除用户 "${username}" 吗？此操作不可恢复。`)) return;
+    
+    try {
+        const res = await fetch(`/admin/delete_user/${id}`, { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            showToast('用户已删除', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.message || '删除失败', 'danger');
+        }
+    } catch (e) {
+        showToast('操作失败: ' + e, 'danger');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}分配账号 - MailNest{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i> 返回
+        </a>
+        <h4 class="fw-bold mb-0">分配邮箱账号</h4>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm mb-4 bg-body">
+                <div class="card-body">
+                    <h6 class="card-title fw-bold text-uppercase small text-body-secondary mb-3">1. 选择目标用户</h6>
+                    <form id="assignForm" method="POST" action="{{ url_for('admin.assign_accounts') }}">
+                        <div class="mb-3">
+                            <label class="form-label">将选中的账号分配给：</label>
+                            <select name="user_id" class="form-select bg-body" required>
+                                <option value="" selected disabled>请选择用户...</option>
+                                {% for u in users %}
+                                <option value="{{ u['id'] }}">{{ u['username'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                确认分配 (<span id="countDisplay">0</span>)
+                            </button>
+                        </div>
+                        
+                        <!-- Hidden inputs for selected accounts -->
+                        <div id="hiddenInputs"></div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm bg-body-tertiary">
+                <div class="card-body">
+                    <small class="text-body-secondary">
+                        <i class="bi bi-info-circle me-1"></i>
+                        提示：您可以点击列表中的复选框选择多个账号。所选账号的原有归属将被覆盖。
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm bg-body">
+                <div class="card-header bg-body py-3 border-bottom-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold text-uppercase small text-body-secondary mb-0">2. 选择账号</h6>
+                        <div class="input-group input-group-sm w-50">
+                            <span class="input-group-text bg-body-tertiary border-end-0 text-body-secondary"><i class="bi bi-search"></i></span>
+                            <input type="text" id="accountSearch" class="form-control border-start-0 ps-0 bg-body" placeholder="搜索邮箱...">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive" style="max-height: 600px;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-body-tertiary sticky-top">
+                            <tr>
+                                <th class="ps-4 bg-body-tertiary border-bottom" style="width: 40px;">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th class="bg-body-tertiary border-bottom">邮箱地址</th>
+                                <th class="bg-body-tertiary border-bottom">当前归属</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accountTableBody">
+                            {% for acc in accounts %}
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input account-checkbox" value="{{ acc['id'] }}">
+                                </td>
+                                <td>{{ acc['email'] }}</td>
+                                <td>
+                                    {% if acc['username'] %}
+                                        <span class="badge bg-body-secondary text-body-secondary border">{{ acc['username'] }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">未分配</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-body text-body-secondary small">
+                    共显示 {{ accounts|length }} 个账号
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const checkboxes = document.querySelectorAll('.account-checkbox');
+    const selectAll = document.getElementById('selectAll');
+    const submitBtn = document.getElementById('submitBtn');
+    const countDisplay = document.getElementById('countDisplay');
+    const hiddenInputs = document.getElementById('hiddenInputs');
+    const searchInput = document.getElementById('accountSearch');
+    const tableBody = document.getElementById('accountTableBody');
+
+    function updateState() {
+        const checked = document.querySelectorAll('.account-checkbox:checked');
+        const count = checked.length;
+        countDisplay.textContent = count;
+        submitBtn.disabled = count === 0;
+        
+        // Update hidden inputs
+        hiddenInputs.innerHTML = '';
+        checked.forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'account_ids';
+            input.value = cb.value;
+            hiddenInputs.appendChild(input);
+        });
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateState));
+    
+    selectAll.addEventListener('change', (e) => {
+        const visibleRows = Array.from(tableBody.querySelectorAll('tr')).filter(row => !row.classList.contains('d-none'));
+        visibleRows.forEach(row => {
+            const cb = row.querySelector('.account-checkbox');
+            cb.checked = e.target.checked;
+        });
+        updateState();
+    });
+
+    searchInput.addEventListener('keyup', (e) => {
+        const term = e.target.value.toLowerCase();
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const email = row.cells[1].textContent.toLowerCase();
+            if(email.includes(term)) {
+                row.classList.remove('d-none');
+            } else {
+                row.classList.add('d-none');
+            }
+        });
+    });
+</script>
+{% endblock %}
