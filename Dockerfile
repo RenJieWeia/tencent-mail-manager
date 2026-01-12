@@ -14,7 +14,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # 安装依赖 (-i 指定镜像源可选，此处保留清华源以加快国内构建)
-#RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 复制项目所有文件
 COPY . .
