@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}用户管理 - MailNest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">用户管理</h4>
+            <p class="text-muted small mb-0">管理系统内的所有注册用户</p>
+        </div>
+        <a href="/admin/create_user" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+            <i class="bi bi-person-plus-fill"></i>
+            <span>添加新用户</span>
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light border-bottom">
+                    <tr>
+                        <th class="ps-4 py-3 text-secondary small text-uppercase">用户 ID</th>
+                        <th class="py-3 text-secondary small text-uppercase">用户信息</th>
+                        <th class="py-3 text-secondary small text-uppercase">已绑定邮箱</th>
+                        <th class="text-end pe-4 py-3 text-secondary small text-uppercase">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td class="ps-4 text-muted fw-mono">#{{ u['id'] }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" 
+                                     style="width: 40px; height: 40px;">
+                                    {{ u['username'][0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ u['username'] }}</div>
+                                    {% if u['username'] == 'admin' %}
+                                    <span class="badge bg-primary rounded-pill small" style="font-size: 0.65rem;">管理员</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-secondary border rounded-pill small" style="font-size: 0.65rem;">普通用户</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-inline-flex align-items-center px-3 py-1 rounded-pill bg-light border text-secondary small">
+                                <i class="bi bi-envelope me-2"></i>
+                                <span class="fw-bold">{{ u['account_count'] }}</span>
+                            </div>
+                        </td>
+                        <td class="text-end pe-4">
+                            {% if u['username'] != 'admin' %}
+                            <div class="btn-group">
+                                 <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                        data-bs-toggle="tooltip" title="重置密码"
+                                        onclick="if(confirm('确定要重置该用户的密码吗？重置后密码将变为 123456')) location.href='/admin/reset_password/{{ u['id'] }}'">
+                                    <i class="bi bi-key-fill"></i> 重置密码
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        data-bs-toggle="tooltip" title="删除用户"
+                                        onclick="if(confirm('警告：确定要删除该用户吗？所有关联数据将被清空！且无法恢复！')) location.href='/admin/delete_user/{{ u['id'] }}'">
+                                    <i class="bi bi-trash-fill"></i> 删除
+                                </button>
+                            </div>
+                            {% else %}
+                            <span class="text-muted small fst-italic">不可操作</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if not users %}
+        <div class="text-center p-5"> 
+            <p class="text-muted">暂无其他用户</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

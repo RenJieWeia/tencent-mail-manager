@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}个人中心 - MailNest{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow border-0 overflow-hidden">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 fw-bold">个人信息设置</h5>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    {% if success %}
+                    <div class="alert alert-success alert-dismissible fade show border-0 bg-success bg-opacity-10 text-success" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i> {{ success }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    {% if error %}
+                    <div class="alert alert-danger alert-dismissible fade show border-0 bg-danger bg-opacity-10 text-danger" role="alert">
+                        <i class="bi bi-exclamation-circle-fill me-2"></i> {{ error }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+
+                    <div class="text-center mb-5">
+                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle bg-primary text-white mb-3 shadow" 
+                             style="width: 96px; height: 96px; font-size: 2.5rem; font-weight: 600;">
+                            {{ user['username'][0].upper() }}
+                        </div>
+                        <h4 class="fw-bold">{{ user['username'] }}</h4>
+                        <p class="text-muted small">用户ID: #{{ session.get('user_id') }}</p>
+                    </div>
+
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label class="form-label text-secondary small fw-bold text-uppercase">用户名</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
+                                <input type="text" name="username" class="form-control bg-light border-start-0 fs-6" 
+                                       value="{{ user['username'] }}" required pattern="[A-Za-z]+" title="仅支持纯英文">
+                            </div>
+                            <div class="form-text mt-2">修改用户名将同时更改您的登录账号</div>
+                        </div>
+                     
+                        <hr class="my-4 border-light">
+                        <h6 class="mb-3 fw-bold text-dark">修改密码</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-bold text-uppercase">新密码</label>
+                            <input type="password" name="new_password" class="form-control" placeholder="如果不修改密码请留空">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-secondary small fw-bold text-uppercase">确认新密码</label>
+                            <input type="password" name="confirm_password" class="form-control" placeholder="请再次输入新密码">
+                        </div>
+
+                        <div class="d-grid gap-2 mt-5">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">保存修改</button>
+                            <a href="/" class="btn btn-link text-decoration-none text-muted">返回首页</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
