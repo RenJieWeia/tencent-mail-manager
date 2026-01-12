@@ -7,6 +7,8 @@ import logging
 from email.header import decode_header
 from flask import Flask, render_template, request, jsonify, send_file
 
+import os
+
 # --- 日志配置 ---
 logging.basicConfig(
     level=logging.INFO,
@@ -19,7 +21,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-DB_FILE = 'accounts.db'
+
+# 确保 data 目录存在
+DATA_DIR = 'data'
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+DB_FILE = os.path.join(DATA_DIR, 'accounts.db')
 
 # --- 数据库操作 ---
 def init_db():

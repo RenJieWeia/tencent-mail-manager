@@ -52,7 +52,8 @@
 
 2.  **运行容器**
     ```bash
-    docker run -d -p 5000:5000 --name mail-manager tencent-mail-manager
+    # 运行并挂载数据目录，确保数据持久化
+    docker run -d -p 5000:5000 -v $(pwd)/data:/app/data --name mail-manager tencent-mail-manager
     ```
 
 3.  **访问**

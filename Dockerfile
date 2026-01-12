@@ -17,5 +17,8 @@ COPY . .
 # 暴露端口
 EXPOSE 5000
 
+# 声明数据卷，方便持久化数据
+VOLUME ["/app/data"]
+
 # 启动命令
 CMD ["python", "app.py"]
