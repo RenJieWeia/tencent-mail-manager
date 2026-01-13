@@ -48,7 +48,13 @@ def init_db():
     if 'status' not in columns:
         db.execute("ALTER TABLE accounts ADD COLUMN status TEXT DEFAULT 'unknown'")
 
+    # Migration: Check if has_new_mail column exists
+    if 'has_new_mail' not in columns:
+        db.execute("ALTER TABLE accounts ADD COLUMN has_new_mail INTEGER DEFAULT 0")
 
+    # Migration: Check if last_mail_identifier column exists
+    if 'last_mail_identifier' not in columns:
+        db.execute("ALTER TABLE accounts ADD COLUMN last_mail_identifier TEXT")
 
     # 审计日志表
     db.execute('''CREATE TABLE IF NOT EXISTS audit_logs
@@ -76,6 +82,10 @@ def init_db():
                    
     # 预置隔离模式 (默认关闭 '0')
     db.execute("INSERT OR IGNORE INTO system_settings (key, value) VALUES ('isolation_mode', '0')")
+    
+    # 预置轮询配置 (默认关闭 '0', 间隔 300 秒)
+    db.execute("INSERT OR IGNORE INTO system_settings (key, value) VALUES ('polling_enabled', '0')")
+    db.execute("INSERT OR IGNORE INTO system_settings (key, value) VALUES ('polling_interval', '300')")
 
     db.commit()
 

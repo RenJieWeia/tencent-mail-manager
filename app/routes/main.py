@@ -20,6 +20,14 @@ def index():
     isolation_setting = db.execute("SELECT value FROM system_settings WHERE key='isolation_mode'").fetchone()
     is_isolated = isolation_setting and isolation_setting['value'] == '1'
     
+    # Get Polling Settings
+    polling_enabled_row = db.execute("SELECT value FROM system_settings WHERE key='polling_enabled'").fetchone()
+    polling_interval_row = db.execute("SELECT value FROM system_settings WHERE key='polling_interval'").fetchone()
+    polling_config = {
+        'enabled': polling_enabled_row and polling_enabled_row['value'] == '1',
+        'interval': polling_interval_row['value'] if polling_interval_row else '300'
+    }
+
     query = "SELECT * FROM accounts"
     params = []
     
@@ -37,10 +45,41 @@ def index():
         else:
             query += " WHERE email LIKE ?"
         params.append(f'%{search_query}%')
+
+    # Sorting: New Mail first, then ID desc
+    query += " ORDER BY has_new_mail DESC, id DESC"
         
     accounts = db.execute(query, params).fetchall()
     
-    return render_template('index.html', accounts=accounts, search_query=search_query)
+    # Return JSON for AJAX requests (Auto-refresh)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.args.get('format') == 'json':
+         return jsonify([dict(row) for row in accounts])
+
+    return render_template('index.html', accounts=accounts, search_query=search_query, polling_config=polling_config)
+
+@bp.route('/polling/config', methods=['POST'])
+@login_required
+def polling_config():
+    if g.user['username'] != 'renjie':
+         return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    enabled = request.form.get('enabled') == 'true'
+    interval = request.form.get('interval')
+    
+    try:
+        interval_val = int(interval)
+        if interval_val < 10: # Minimum interval safety
+             return jsonify({"status": "error", "message": "Interval too small (min 10s)"}), 400
+    except:
+        return jsonify({"status": "error", "message": "Invalid interval"}), 400
+
+    db = get_db()
+    db.execute("INSERT OR REPLACE INTO system_settings (key, value) VALUES ('polling_enabled', ?)", ('1' if enabled else '0',))
+    db.execute("INSERT OR REPLACE INTO system_settings (key, value) VALUES ('polling_interval', ?)", (str(interval_val),))
+    db.commit()
+    
+    log_audit(g.user['username'], 'UPDATE_POLLING', f"Enabled: {enabled}, Interval: {interval_val}")
+    return jsonify({"status": "ok"})
 
 @bp.route('/add', methods=['POST'])
 @login_required
@@ -97,9 +136,19 @@ def view_mail(acc_id):
     if account:
         result = fetch_latest_mail(account['email'], account['auth_code'])
         
-        # Update account status based on result
         new_status = 'success' if result['status'] == 'success' else 'error'
-        db.execute("UPDATE accounts SET status = ? WHERE id = ?", (new_status, acc_id))
+        
+        # When user checks mail, clear "new mail" flag and update identifier
+        if new_status == 'success':
+             subject = result.get('subject', '')
+             sender = result.get('sender', '')
+             current_identifier = f"{subject}|{sender}"
+             
+             db.execute("UPDATE accounts SET status = ?, has_new_mail = 0, last_mail_identifier = ? WHERE id = ?", 
+                        (new_status, current_identifier, acc_id))
+        else:
+             db.execute("UPDATE accounts SET status = ? WHERE id = ?", (new_status, acc_id))
+
         db.commit()
         
         return jsonify(result)

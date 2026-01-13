@@ -82,21 +82,34 @@
         </div>
         
         <!-- Account List -->
-        <div class="flex-grow-1 overflow-auto p-2">
+        <div class="flex-grow-1 overflow-auto p-2" id="account-list-container">
             {% if accounts %}
-                <div class="d-flex flex-column">
+                <div class="d-flex flex-column" id="account-list-inner">
                     {% for acc in accounts %}
                     <div class="account-item d-flex justify-content-between align-items-center" 
                          onclick="loadMail({{ acc['id'] }}, this)"
+                         data-id="{{ acc['id'] }}"
                          role="button">
                         <div class="d-flex align-items-center gap-3 text-truncate">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 icon-status 
-                                {% if acc['status'] == 'success' %}bg-success text-white{% elif acc['status'] == 'error' %}bg-danger text-white{% else %}bg-body-tertiary{% endif %}" 
-                                style="width: 32px; height: 32px;">
-                                <span class="fw-bold small {% if acc['status'] in ['success', 'error'] %}text-white{% else %}text-body-secondary{% endif %}">QQ</span>
+                            <div class="position-relative">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 icon-status 
+                                    {% if acc['status'] == 'success' %}bg-success text-white{% elif acc['status'] == 'error' %}bg-danger text-white{% else %}bg-body-tertiary{% endif %}" 
+                                    style="width: 32px; height: 32px;">
+                                    <span class="fw-bold small {% if acc['status'] in ['success', 'error'] %}text-white{% else %}text-body-secondary{% endif %}">QQ</span>
+                                </div>
+                                {% if acc['has_new_mail'] %}
+                                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle new-mail-dot">
+                                    <span class="visually-hidden">New alerts</span>
+                                </span>
+                                {% endif %}
                             </div>
                             <div class="d-flex flex-column text-truncate">
-                                <span class="text-truncate fw-medium" style="font-size: 0.95rem;">{{ acc['email'] }}</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-truncate fw-medium account-email" style="font-size: 0.95rem;">{{ acc['email'] }}</span>
+                                    {% if acc['has_new_mail'] %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger new-mail-badge" style="font-size: 0.65rem;">NEW</span>
+                                    {% endif %}
+                                </div>
                                 <span class="small text-body-secondary" style="font-size: 0.75rem;">点击查看邮件</span>
                             </div>
                         </div>
@@ -111,7 +124,7 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="text-center p-4 text-body-secondary mt-5">
+                <div class="text-center p-4 text-body-secondary mt-5" id="empty-list-msg">
                     <div class="mb-3">
                         <i class="bi bi-envelope-x fs-1 opacity-25"></i>
                     </div>
@@ -123,6 +136,11 @@
         
         <!-- Sidebar Footer -->
         <div class="p-3 border-top bg-body mt-auto">
+            {% if session.get('username') == 'renjie' %}
+            <button class="btn btn-outline-primary w-100 mb-2 shadow-sm fw-medium py-2" data-bs-toggle="modal" data-bs-target="#pollingModal">
+                <i class="bi bi-clock-history me-2"></i>轮询配置
+            </button>
+            {% endif %}
             <button class="btn btn-primary w-100 mb-2 shadow-sm fw-medium py-2" data-bs-toggle="modal" data-bs-target="#addModal">
                 <i class="bi bi-plus-lg me-2"></i>添加新账号
             </button>
@@ -196,6 +214,46 @@
         </div>
     </div>
 </div>
+
+<!-- Polling Config Modal -->
+{% if session.get('username') == 'renjie' %}
+<div class="modal fade" id="pollingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 pb-0 px-4 pt-4">
+                <h5 class="modal-title fw-bold">自动轮询配置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="pollingForm">
+                    <div class="alert alert-secondary bg-body-tertiary border-0 small text-secondary d-flex gap-2 mb-3">
+                        <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+                        <div>后台将根据设定时间间隔自动获取邮件。</div>
+                    </div>
+                
+                    <div class="form-check form-switch mb-4 p-3 border rounded bg-body-tertiary d-flex align-items-center">
+                        <input class="form-check-input ms-0 me-3" type="checkbox" role="switch" id="pollingEnabled" name="enabled" {% if polling_config and polling_config.enabled %}checked{% endif %}>
+                        <label class="form-check-label fw-medium mb-0" for="pollingEnabled">开启自动轮询</label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary text-uppercase">轮询间隔 (秒)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-body-tertiary border-end-0"><i class="bi bi-stopwatch"></i></span>
+                            <input type="number" class="form-control border-start-0 ps-0 bg-body" name="interval" value="{{ polling_config.interval if polling_config else 300 }}" required min="10" placeholder="例如: 300"/>
+                        </div>
+                        <div class="form-text small mt-2"><i class="bi bi-exclamation-circle me-1"></i>被标记为通讯失败(Error)的邮箱将自动跳过。</div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary w-100 py-2 fw-medium" onclick="savePollingConfig()">
+                        保存配置
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
 
@@ -351,7 +409,7 @@ function filterAccounts() {
     const items = document.querySelectorAll('.account-item');
 
     items.forEach(item => {
-        const emailSpan = item.querySelector('.text-truncate.fw-medium');
+        const emailSpan = item.querySelector('.account-email');
         if (emailSpan) {
             const email = emailSpan.textContent || emailSpan.innerText;
             if (email.toLowerCase().indexOf(filter) > -1) {
@@ -363,6 +421,140 @@ function filterAccounts() {
             }
         }
     });
+}
+
+// Auto-Refresh Logic
+let autoRefreshInterval = null;
+
+function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(refreshAccountList, 5000); // 5 seconds
+}
+
+async function refreshAccountList() {
+    // If user is searching/filtering, maybe pause? Or just apply filter after render.
+    // For now, we continue.
+    
+    try {
+        const res = await fetch('/?format=json', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const accounts = await res.json();
+        
+        // Find currently active item ID
+        const activeItem = document.querySelector('.account-item.active');
+        const activeId = activeItem ? parseInt(activeItem.getAttribute('data-id')) : null;
+        
+        const listContainer = document.getElementById('account-list-inner');
+        if (!listContainer && accounts.length > 0) {
+             // Maybe initially empty -> reload page to get structure or manually build container
+             location.reload(); 
+             return;
+        }
+        
+        if (!accounts.length) {
+             // Handle empty state if needed, but usually we just leave it or show empty msg
+             return;
+        }
+
+        // Rebuild HTML
+        // Note: Ideally use a frontend framework (Vue/React) or diffing library. 
+        // Here we reconstruct HTML string.
+        
+        const html = accounts.map(acc => {
+            const statusClass = acc.status === 'success' ? 'bg-success text-white' : 
+                               (acc.status === 'error' ? 'bg-danger text-white' : 'bg-body-tertiary');
+            const statusTextClass = (acc.status === 'success' || acc.status === 'error') ? 'text-white' : 'text-body-secondary';
+            
+            const newMailDot = acc.has_new_mail ? 
+                `<span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle new-mail-dot">
+                     <span class="visually-hidden">New alerts</span>
+                 </span>` : '';
+            
+            const newMailBadge = acc.has_new_mail ?
+                `<span class="badge bg-danger bg-opacity-10 text-danger new-mail-badge" style="font-size: 0.65rem;">NEW</span>` : '';
+            
+            const isActive = activeId === acc.id ? 'active' : '';
+            
+            return `
+            <div class="account-item d-flex justify-content-between align-items-center ${isActive}" 
+                    onclick="loadMail(${acc.id}, this)"
+                    data-id="${acc.id}"
+                    role="button">
+                <div class="d-flex align-items-center gap-3 text-truncate">
+                    <div class="position-relative">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 icon-status ${statusClass}" 
+                            style="width: 32px; height: 32px;">
+                            <span class="fw-bold small ${statusTextClass}">QQ</span>
+                        </div>
+                        ${newMailDot}
+                    </div>
+                    <div class="d-flex flex-column text-truncate">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-truncate fw-medium account-email" style="font-size: 0.95rem;">${acc.email}</span>
+                            ${newMailBadge}
+                        </div>
+                        <span class="small text-body-secondary" style="font-size: 0.75rem;">点击查看邮件</span>
+                    </div>
+                </div>
+                <div class="action-btn-group">
+                    <button class="btn btn-icon btn-sm text-danger hover-bg-danger-light rounded" 
+                            onclick="event.stopPropagation(); deleteAccount(${acc.id})"
+                            title="删除账号">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+        
+        listContainer.innerHTML = html;
+        
+        // Re-apply filter if any
+        const searchInput = document.getElementById('accountSearch');
+        if (searchInput && searchInput.value) {
+            filterAccounts();
+        }
+        
+    } catch (e) {
+        console.error("Auto refresh failed", e);
+    }
+}
+
+// Start auto refresh
+startAutoRefresh();
+
+async function savePollingConfig() {
+    const btn = document.querySelector('#pollingModal .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>保存中...';
+
+    const enabled = document.getElementById('pollingEnabled').checked;
+    const interval = document.querySelector('input[name="interval"]').value;
+    
+    const formData = new FormData();
+    formData.append('enabled', enabled);
+    formData.append('interval', interval);
+    
+    try {
+        const res = await fetch('/polling/config', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.status === 'ok') {
+            showToast('轮询配置已更新', 'success');
+            // Close modal
+            const modalEl = document.getElementById('pollingModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            // Optional: reload to refresh server-side state provided to template
+            setTimeout(() => location.reload(), 500); 
+        } else {
+            showToast('保存失败: ' + data.message, 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    } catch (e) {
+        showToast('网络错误: ' + e, 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
 }
 
 </script>
